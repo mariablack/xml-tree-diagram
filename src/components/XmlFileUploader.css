@@ -1,0 +1,21 @@
+.card{
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+
+.node__root > circle {
+    fill: red;
+   
+  }
+  
+  .node__branch > circle {
+    fill: yellow;
+   
+  }
+  
+  .node__leaf > circle {
+    fill: green;
+    
+  }
