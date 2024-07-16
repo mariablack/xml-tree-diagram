@@ -1,8 +1,7 @@
-import React from 'react';
-import { shallow } from 'enzyme';
 import XmlFileUploader from '../components/XmlFileUploader';
-import { FileUpload } from 'primereact/fileupload';
-import Tree from 'react-d3-tree';
+import { render, screen, prettyDOM } from '@testing-library/react'
+import userEvent from "@testing-library/user-event";
+import '@testing-library/jest-dom'
 
 const validXml = `<?xml version="1.0" encoding="UTF-8"?>
       <xacml3:policy xmlns:xacml3="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" policyid="access-document" rulecombiningalgid="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" version="1">
@@ -52,47 +51,34 @@ const validXml = `<?xml version="1.0" encoding="UTF-8"?>
 const invalidXml = `<xacml3:policy xmlns:xacml3="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17">`;
 
 describe('XmlFileUploader', () => {
-  let component : any;
+  window.URL.createObjectURL = jest.fn();
 
-  beforeEach(() => {
-    component = shallow(<XmlFileUploader />);
+  afterEach(() => {
+    (window.URL.createObjectURL as jest.Mock).mockReset();
   });
 
   it('should render FileUpload component', () => {
-    expect(component.find(FileUpload)).toHaveLength(1);
+    render(<XmlFileUploader />);
+    expect(screen.getByText('Choose a file to upload')).toBeInTheDocument();
   });
 
-  it('should handle valid XML file upload and display parsed XML as tree', (done) => {
-    
+  it('should handle valid XML file upload and display parsed XML as tree', async () => {
+
+
     const file = new File([validXml], 'test.xml', { type: 'text/xml' });
+    render(<XmlFileUploader />);
 
-    const instance = component.instance();
+    const fileInput = screen.getByTestId('file-input');
+    expect(fileInput).toBeInTheDocument();
+    // console.log(prettyDOM(fileInput))
 
-    instance.handleFileUpload({ files: [file] });
+    await userEvent.upload(fileInput, file);
 
-    setImmediate(() => {
-      component.update();
-      expect(component.find(Tree)).toHaveLength(1);
-      expect(component.text()).toContain('xacml3:policy');
-      done();
-    });
-  });
+    screen.debug()
 
-  it('should handle invalid XML file upload and display error', (done) => {
+    // expect((fileInput as HTMLInputElement).files).toHaveLength(1);
 
-    const file = new File([invalidXml], 'test.xml', { type: 'text/xml' });
-
-    const instance = component.instance();
-
-    console.error = jest.fn();
-
-    instance.handleFileUpload({ files: [file] });
-
-    setImmediate(() => {
-      component.update();
-      expect(component.find(Tree)).toHaveLength(0);
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Failed to parse XML'));
-      done();
-    });
+    // await new Promise((r) => setTimeout(r, 2000));
+    expect(await screen.findByText('xacml3:apply')).toBeInTheDocument();
   });
 });

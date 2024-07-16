@@ -2,11 +2,8 @@
 import React, { useState } from 'react';
 import  XMLParser   from 'react-xml-parser';
 import Tree from 'react-d3-tree';
-
-
 import { FileUpload } from 'primereact/fileupload';
 import './XmlFileUploader.css'
-        
 
 interface Node {
   name: string;
@@ -14,8 +11,6 @@ interface Node {
   attributes?: { [key: string]: string };
   value?: string;
 }
-
-
 
 const XmlFileUploader: React.FC = () => {
   const [treeData, setTreeData] = useState<Node | null>(null);
@@ -66,11 +61,17 @@ const XmlFileUploader: React.FC = () => {
 
   return (
     <div className="card">
-      <FileUpload mode="basic" accept=".xml"  onSelect={handleXmlFile} chooseLabel="Choose a file to upload" />
+      <FileUpload pt={{
+          input: { "data-testid": "file-input"},
+        }} 
+        mode="basic" 
+        accept=".xml"  
+        onSelect={handleXmlFile} 
+        chooseLabel="Choose a file to upload" 
+      />
       {treeData && (
         <div style={{ width: '80em', height: '80em' }}>
-          <Tree data={treeData}
-             />
+          <Tree data={treeData} />
         </div>
       )}
     </div>
