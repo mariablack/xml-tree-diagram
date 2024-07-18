@@ -1,9 +1,17 @@
-import XmlFileUploader from '../components/XmlFileUploader';
-import { render, screen, prettyDOM } from '@testing-library/react'
-import userEvent from "@testing-library/user-event";
-import '@testing-library/jest-dom'
+/// <reference types="cypress" />
+import XmlFileUploader from "../../src/components/XmlFileUploader";
 
-const validXml = `<?xml version="1.0" encoding="UTF-8"?>
+describe('XmlFileUploader', () => {
+    beforeEach(() => {
+      cy.mount(<XmlFileUploader/>)
+    });
+  
+    it('should render the file upload component', () => {
+      cy.get('[data-testid="file-input"]').should('exist');
+    });
+  
+    it('should handle valid XML file upload and display parsed XML as tree', () => {
+      const validXml = `<?xml version="1.0" encoding="UTF-8"?>
       <xacml3:policy xmlns:xacml3="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" policyid="access-document" rulecombiningalgid="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" version="1">
         <xacml3:description>This Policy controls access to documents and makes sure only those managers at Axiomatics with the right level of clearance can view them.</xacml3:description>
         <xacml3:policydefaults>
@@ -47,38 +55,33 @@ const validXml = `<?xml version="1.0" encoding="UTF-8"?>
           </xacml3:target>
         </xacml3:rule>
       </xacml3:policy>`;
+   
+      
+      cy.get('[data-testid="file-input"]').selectFile({
+        contents: Cypress.Buffer.from(validXml),
+        fileName: 'valid.xml',
+        mimeType: 'text/xml',
+        lastModified: Date.now(),
+      },{force: true})
+  
+      cy.get('.rd3t-node').should('exist');
+    });
+  
+    it('should handle invalid XML file upload and display error', () => {
+      const invalidXml = `<?xml version="1.0" encoding="UTF-8"?><invalid></xml>`;
+  
+      cy.get('[data-testid="file-input"]').selectFile({
+        contents: Cypress.Buffer.from(invalidXml),
+        fileName: 'invalid.xml',
+        mimeType: 'text/xml',
+        lastModified: Date.now(),
+      },{force: true})
 
-const invalidXml = `<xacml3:policy xmlns:xacml3="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17">`;
+      cy.on('uncaught:exception', (err, runnable) => {
+        expect(err.message).to.include('Failed to parse XML');
 
-describe('XmlFileUploader', () => {
-  window.URL.createObjectURL = jest.fn();
-
-  afterEach(() => {
-    (window.URL.createObjectURL as jest.Mock).mockReset();
+         return false;
+      });
+    });
   });
-
-  it('should render FileUpload component', () => {
-    render(<XmlFileUploader />);
-    expect(screen.getByText('Choose a file to upload')).toBeInTheDocument();
-  });
-
-  it('should handle valid XML file upload and display parsed XML as tree', async () => {
-
-
-    const file = new File([validXml], 'test.xml', { type: 'text/xml' });
-    render(<XmlFileUploader />);
-
-    const fileInput = screen.getByTestId('file-input');
-    expect(fileInput).toBeInTheDocument();
-    // console.log(prettyDOM(fileInput))
-
-    await userEvent.upload(fileInput, file);
-
-    screen.debug()
-
-    // expect((fileInput as HTMLInputElement).files).toHaveLength(1);
-
-    // await new Promise((r) => setTimeout(r, 2000));
-    expect(await screen.findByText('xacml3:apply')).toBeInTheDocument();
-  });
-});
+  

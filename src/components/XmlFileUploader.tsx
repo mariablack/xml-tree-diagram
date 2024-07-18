@@ -15,6 +15,7 @@ interface Node {
 const XmlFileUploader: React.FC = () => {
   const [treeData, setTreeData] = useState<Node | null>(null);
 
+  // parse xml to string with XMLParser
   const handleXmlFile = (event: any) => {
     const file = event.files?.[0];
     if (file) {
@@ -33,22 +34,26 @@ const XmlFileUploader: React.FC = () => {
      }
   }
 
+   // form parsed xml to:  name: '', attributes: {}, value: '', children: [] for the d3-tree
     const convertToTreeData = (node: any): Node => {
      
+      //set new node
       const treeNode: Node = {
         name: node.name,
       };
 
+      //set attributes if they exist
       if (Object.keys(node.attributes).length > 0) {
         treeNode.attributes = node.attributes;
       }
     
+      //set value if exists
       if (node.value) {
         treeNode.value = node.value;
       }
     
       // Check if node has children
-      //if it has call function again and add them to tree node
+      // if it has, call function again and add them to tree node
       if (node.children && node.children.length > 0) {
         treeNode.children = node.children.map(convertToTreeData);
       }
